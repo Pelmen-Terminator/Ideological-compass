@@ -6,6 +6,13 @@
   const catalogEl = document.getElementById("catalog");
   const catalogToggle = document.getElementById("catalogToggle");
   const catalogOverlay = document.getElementById("catalogOverlay");
+  const settingsBtn = document.getElementById("settingsBtn");
+  const settingsPanel = document.getElementById("settingsPanel");
+  const settingsClose = document.getElementById("settingsClose");
+  const viewportSelect = document.getElementById("viewportSelect");
+  const fontSizeSelect = document.getElementById("fontSizeSelect");
+  const themeSelect = document.getElementById("themeSelect");
+  const viewportInfo = document.getElementById("viewportInfo");
 
   // ---- flat index for quick lookup + prev/next ----
   const flat = [];
@@ -14,6 +21,114 @@
       flat.push({ ci, ii, cat, ideo });
     });
   });
+
+  function findByIdeoId(id){
+    return flat.find(f => f.ideo.id === id) || null;
+  }
+
+  // ---------------- Настройки ----------------
+  // Загрузка сохранённых настроек
+  function loadSettings() {
+    const saved = localStorage.getItem('ideological-compass-settings');
+    if (saved) {
+      try {
+        const settings = JSON.parse(saved);
+        if (settings.viewport) viewportSelect.value = settings.viewport;
+        if (settings.fontSize) fontSizeSelect.value = settings.fontSize;
+        if (settings.theme) themeSelect.value = settings.theme;
+        applyViewport(settings.viewport || 'auto');
+        applyFontSize(settings.fontSize || 'medium');
+        applyTheme(settings.theme || 'light');
+      } catch (e) {
+        // ignore
+      }
+    }
+  }
+
+  function saveSettings() {
+    const settings = {
+      viewport: viewportSelect.value,
+      fontSize: fontSizeSelect.value,
+      theme: themeSelect.value
+    };
+    localStorage.setItem('ideological-compass-settings', JSON.stringify(settings));
+  }
+
+  function applyViewport(value) {
+    const frame = document.querySelector('.frame');
+    const catalog = document.getElementById('catalog');
+    const reader = document.getElementById('reader');
+    
+    // Сброс классов
+    frame.classList.remove('viewport-phone', 'viewport-tablet', 'viewport-desktop', 'viewport-tv');
+    catalog.classList.remove('viewport-phone', 'viewport-tablet', 'viewport-desktop', 'viewport-tv');
+    
+    if (value === 'phone') {
+      frame.classList.add('viewport-phone');
+      catalog.classList.add('viewport-phone');
+      viewportInfo.textContent = '📱 Телефон (до 480px)';
+    } else if (value === 'tablet') {
+      frame.classList.add('viewport-tablet');
+      catalog.classList.add('viewport-tablet');
+      viewportInfo.textContent = '📱 Планшет (481-880px)';
+    } else if (value === 'desktop') {
+      frame.classList.add('viewport-desktop');
+      catalog.classList.add('viewport-desktop');
+      viewportInfo.textContent = '💻 Компьютер (881-1200px)';
+    } else if (value === 'tv') {
+      frame.classList.add('viewport-tv');
+      catalog.classList.add('viewport-tv');
+      viewportInfo.textContent = '🖥 Телевизор (1200px+)';
+    } else {
+      viewportInfo.textContent = '🔄 Авто (адаптивно)';
+    }
+    saveSettings();
+  }
+
+  function applyFontSize(value) {
+    document.body.classList.remove('font-small', 'font-medium', 'font-large', 'font-xlarge');
+    document.body.classList.add('font-' + value);
+    saveSettings();
+  }
+
+  function applyTheme(value) {
+    document.body.classList.remove('theme-light', 'theme-dark', 'theme-sepia');
+    document.body.classList.add('theme-' + value);
+    saveSettings();
+  }
+
+  // ---- Настройки UI ----
+  settingsBtn.addEventListener('click', () => {
+    settingsPanel.classList.toggle('open');
+  });
+
+  settingsClose.addEventListener('click', () => {
+    settingsPanel.classList.remove('open');
+  });
+
+  // Закрытие настроек при клике вне
+  document.addEventListener('click', (e) => {
+    if (settingsPanel.classList.contains('open')) {
+      if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
+        settingsPanel.classList.remove('open');
+      }
+    }
+  });
+
+  viewportSelect.addEventListener('change', (e) => {
+    applyViewport(e.target.value);
+  });
+
+  fontSizeSelect.addEventListener('change', (e) => {
+    applyFontSize(e.target.value);
+  });
+
+  themeSelect.addEventListener('change', (e) => {
+    applyTheme(e.target.value);
+  });
+
+  // ---- flat index for quick lookup + prev/next ----
+  // (уже объявлен выше)
 
   function findByIdeoId(id){
     return flat.find(f => f.ideo.id === id) || null;
@@ -61,7 +176,6 @@
         btn.className = "ideo-btn" + (ideo.id.endsWith("-core") ? " core" : "");
         if (ideo.id === activeIdeoId) btn.classList.add("active");
         
-        // Добавляем индикатор радикальности
         let label = ideo.name;
         if (ideo.isExtremist) {
           label = '⚠ ' + ideo.name;
@@ -129,25 +243,29 @@
   function renderCover(){
     const cells = DATA.map(cat => {
       const core = cat.ideologies[0];
+      const hasRadical = cat.ideologies.some(i => i.isRadical || i.isExtremist);
       return `<div class="cover-cell" data-id="${core.id}">
         <div class="n">${cat.eyebrow}</div>
         <div class="t">${cat.name}</div>
-        <div class="cover-cell-count">${cat.ideologies.length}</div>
+        <div class="cover-cell-count">${cat.ideologies.length}${hasRadical ? ' ⚡' : ''}</div>
       </div>`;
     }).join("");
 
     const totalIdeologies = flat.length;
+    const radicalCount = flat.filter(i => i.ideo.isRadical).length;
+    const extremistCount = flat.filter(i => i.ideo.isExtremist).length;
 
     reader.innerHTML = `
       <div class="mobile-bar">
         <button id="mbToggle" aria-label="Открыть каталог">☰</button>
         <span>Идеологический Компас</span>
-        <span class="version-badge">v6.0</span>
+        <button id="settingsBtn" class="settings-toggle" aria-label="Настройки">⚙</button>
+        <span class="version-badge">v7.0</span>
       </div>
       <div class="cover">
         <div class="cover-eyebrow">Справочник · ${DATA.length} категорий · ${totalIdeologies} идеологий</div>
         <h1>Идеологический Компас</h1>
-        <div class="version-badge-page">Версия 6.0</div>
+        <div class="version-badge-page">Версия 7.0</div>
 
         <!-- ДИСКЛЕЙМЕР -->
         <div class="disclaimer">
@@ -160,8 +278,10 @@
             <p>Некоторые идеологии, представленные здесь, могут быть <strong>опасными, дискриминационными</strong> или противоречащими общечеловеческим ценностям. 
             Сайт <strong>не рекомендует</strong> их к принятию или реализации.</p>
             <p><strong>Цель проекта</strong> — образовательная: дать объективное представление о многообразии политических учений.</p>
-            <p><span class="legend-item"><span class="legend-dot extremist"></span> — экстремистские идеологии (запрещены или осуждаются)</span>
-            <span class="legend-item"><span class="legend-dot radical"></span> — радикальные идеологии</span></p>
+            <div class="legend">
+              <span class="legend-item"><span class="legend-dot radical"></span> Радикальные (${radicalCount})</span>
+              <span class="legend-item"><span class="legend-dot extremist"></span> Экстремистские (${extremistCount})</span>
+            </div>
           </div>
         </div>
 
@@ -173,10 +293,20 @@
     reader.querySelectorAll(".cover-cell").forEach(cell => {
       cell.addEventListener("click", () => { location.hash = "#/" + cell.dataset.id; });
     });
+    
+    // Настройки в мобильной панели
     const mbToggle = document.getElementById("mbToggle");
     if (mbToggle) {
       mbToggle.addEventListener("click", () => {
         catalogEl.classList.toggle("open");
+      });
+    }
+    
+    // Кнопка настроек в мобильной панели
+    const mbSettings = document.getElementById("settingsBtn");
+    if (mbSettings) {
+      mbSettings.addEventListener("click", () => {
+        settingsPanel.classList.toggle("open");
       });
     }
   }
@@ -203,7 +333,6 @@
     const coreIdeo = cat.ideologies[0];
     const isCore = ideo.id === coreIdeo.id;
 
-    // Определяем тип дисклеймера
     let disclaimerType = 'standard';
     let disclaimerText = 'Сайт не пропагандирует данную идеологию';
     let disclaimerClass = 'mini-disclaimer';
@@ -222,7 +351,8 @@
       <div class="mobile-bar">
         <button id="mbToggle" aria-label="Открыть каталог">☰</button>
         <span>${isCore ? 'Категория' : ''} ${cat.name}</span>
-        <span class="version-badge">v6.0</span>
+        <button id="settingsBtn" class="settings-toggle" aria-label="Настройки">⚙</button>
+        <span class="version-badge">v7.0</span>
       </div>
       <div class="entry">
         <div class="${disclaimerClass}">
@@ -280,12 +410,22 @@
     }
     document.getElementById("navPrev").addEventListener("click", () => { location.hash = "#/" + prev.ideo.id; });
     document.getElementById("navNext").addEventListener("click", () => { location.hash = "#/" + next.ideo.id; });
+    
+    // Настройки в мобильной панели
     const mbToggle = document.getElementById("mbToggle");
     if (mbToggle) {
       mbToggle.addEventListener("click", () => {
         catalogEl.classList.toggle("open");
       });
     }
+    
+    const mbSettings = document.getElementById("settingsBtn");
+    if (mbSettings) {
+      mbSettings.addEventListener("click", () => {
+        settingsPanel.classList.toggle("open");
+      });
+    }
+    
     reader.scrollTo({top:0});
   }
 
@@ -309,6 +449,9 @@
     renderEntry(found, chapterIndex);
     renderCatalog(found.ideo.id);
   }
+
+  // ---- Загрузка настроек при старте ----
+  loadSettings();
 
   window.addEventListener("hashchange", route);
   route();

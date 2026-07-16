@@ -1,8 +1,6 @@
 /* ============================================================
    Идеологический Компас — визуальная система
-   Версия 4.1
-   Концепция: тёмный каталожный шкаф (сайдбар) + раскрытая
-   страница энциклопедии на бумаге (читалка).
+   Версия 7.0 — с настройками и мобильной оптимизацией
    ============================================================ */
 
 :root{
@@ -26,9 +24,87 @@
   --mono: "IBM Plex Mono", ui-monospace, monospace;
 
   --radius: 3px;
-  --touch-target: 44px;
+  --touch-target: 48px;
+  --sidebar-width: 336px;
 }
 
+/* ============ ТЕМЫ ============ */
+body.theme-dark {
+  --paper: #1A1A2E;
+  --paper-2: #16213E;
+  --paper-line: #2A2A4A;
+  --ink-text: #EAEAEA;
+  --muted: #8888AA;
+  --maroon: #C06060;
+}
+
+body.theme-sepia {
+  --paper: #F4ECD8;
+  --paper-2: #E8DCC4;
+  --paper-line: #D4C8A8;
+  --ink-text: #3C2A18;
+  --muted: #8A7A5A;
+  --maroon: #8B4513;
+}
+
+/* ============ РАЗМЕРЫ ШРИФТА ============ */
+body.font-small {
+  --font-scale: 0.85;
+}
+body.font-large {
+  --font-scale: 1.15;
+}
+body.font-xlarge {
+  --font-scale: 1.3;
+}
+
+body:not(.font-small):not(.font-large):not(.font-xlarge) {
+  --font-scale: 1;
+}
+
+/* ============ ВИДЕОПОРТЫ ============ */
+/* Телефон (до 480px) */
+.frame.viewport-phone {
+  --sidebar-width: 85%;
+}
+.frame.viewport-phone .catalog {
+  max-width: 85%;
+}
+.frame.viewport-phone .entry,
+.frame.viewport-phone .cover {
+  padding-left: 14px;
+  padding-right: 14px;
+}
+
+/* Планшет (481-880px) */
+.frame.viewport-tablet {
+  --sidebar-width: 70%;
+}
+.frame.viewport-tablet .catalog {
+  max-width: 70%;
+}
+
+/* Компьютер (881-1200px) */
+.frame.viewport-desktop {
+  --sidebar-width: 336px;
+}
+.frame.viewport-desktop .catalog {
+  max-width: 336px;
+}
+
+/* Телевизор (1200px+) */
+.frame.viewport-tv {
+  --sidebar-width: 400px;
+}
+.frame.viewport-tv .catalog {
+  max-width: 400px;
+}
+.frame.viewport-tv .entry,
+.frame.viewport-tv .cover {
+  max-width: 900px;
+}
+
+/* ============ ОСНОВНЫЕ СТИЛИ ============ */
 *{ box-sizing: border-box; }
 html,body{ margin:0; padding:0; height:100%; }
 body{
@@ -37,16 +113,135 @@ body{
   font-family: var(--serif-body);
   -webkit-font-smoothing: antialiased;
   -webkit-tap-highlight-color: transparent;
+  transition: background 0.3s, color 0.3s;
+  font-size: calc(16px * var(--font-scale, 1));
 }
 :focus-visible{ outline: 2px solid var(--brass); outline-offset: 2px; }
 
 .frame{
   display: grid;
-  grid-template-columns: 336px 1fr;
+  grid-template-columns: var(--sidebar-width, 336px) 1fr;
   min-height: 100vh;
+  transition: grid-template-columns 0.3s ease;
 }
 
-/* ================= SIDEBAR / CATALOG ================= */
+/* ============ НАСТРОЙКИ ============ */
+.settings-toggle {
+  background: none;
+  border: 1px solid var(--ink-line);
+  color: var(--sidebar-tx);
+  border-radius: var(--radius);
+  width: var(--touch-target);
+  height: var(--touch-target);
+  cursor: pointer;
+  font-size: 20px;
+  touch-action: manipulation;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.settings-toggle:hover { background: var(--ink-soft); }
+.settings-toggle:active { background: var(--ink-line); }
+
+.settings-panel {
+  position: fixed;
+  top: 0;
+  right: -340px;
+  width: 320px;
+  max-width: 85vw;
+  height: 100vh;
+  background: var(--ink);
+  border-left: 1px solid var(--ink-line);
+  z-index: 100;
+  padding: 24px 20px;
+  transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow-y: auto;
+  box-shadow: -4px 0 24px rgba(0,0,0,0.3);
+}
+.settings-panel.open {
+  right: 0;
+}
+.settings-panel::-webkit-scrollbar { width: 6px; }
+.settings-panel::-webkit-scrollbar-thumb { background: var(--ink-line); border-radius: 3px; }
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--ink-line);
+}
+.settings-header h3 {
+  font-family: var(--mono);
+  font-size: 14px;
+  color: var(--sidebar-tx);
+  margin: 0;
+  letter-spacing: 0.5px;
+}
+.settings-close {
+  background: none;
+  border: none;
+  color: var(--sidebar-dim);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.settings-close:hover { color: var(--sidebar-tx); }
+
+.settings-group {
+  margin-bottom: 20px;
+}
+.settings-group label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--sidebar-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+.settings-group select {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--ink-soft);
+  border: 1px solid var(--ink-line);
+  border-radius: var(--radius);
+  color: var(--sidebar-tx);
+  font-family: var(--serif-body);
+  font-size: 13px;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237C8798' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 36px;
+}
+.settings-group select:focus {
+  border-color: var(--brass);
+  outline: none;
+}
+.settings-group select option {
+  background: var(--ink);
+  color: var(--sidebar-tx);
+}
+
+.settings-info {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--ink-line);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--sidebar-dim);
+}
+.settings-info #viewportInfo {
+  display: block;
+  margin-bottom: 4px;
+}
+
+/* ============ САЙДБАР ============ */
 .catalog{
   background: var(--ink);
   color: var(--sidebar-tx);
@@ -56,6 +251,7 @@ body{
   height: 100vh;
   position: sticky;
   top: 0;
+  transition: background 0.3s;
 }
 .catalog-head{
   display:grid;
@@ -74,7 +270,7 @@ body{
 .catalog-title h1{
   font-family: var(--serif-display);
   font-weight: 600;
-  font-size: 21px;
+  font-size: calc(21px * var(--font-scale, 1));
   letter-spacing: 0.2px;
   margin: 0 0 4px;
   color: #F4EFE3;
@@ -92,7 +288,7 @@ body{
 }
 .catalog-title p{
   margin:0;
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale, 1));
   line-height: 1.4;
   color: var(--sidebar-dim);
   max-width: 24ch;
@@ -137,17 +333,18 @@ body{
   font-family: var(--serif-body);
   touch-action: manipulation;
   min-height: var(--touch-target);
+  font-size: calc(15px * var(--font-scale, 1));
 }
 .cat-head:hover{ background: var(--ink-soft); }
 .cat-head:active{ background: var(--ink-line); }
 .cat-eyebrow{
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale, 1));
   color: var(--brass);
   letter-spacing: 0.5px;
 }
 .cat-name{
-  font-size: 15px;
+  font-size: calc(15px * var(--font-scale, 1));
   font-weight: 600;
   color: #EDE7D9;
 }
@@ -169,7 +366,7 @@ body{
   text-align: left;
   padding: 8px 16px;
   margin: 2px 8px 4px 8px;
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale, 1));
   font-family: var(--mono);
   border-radius: var(--radius);
   cursor:pointer;
@@ -187,10 +384,7 @@ body{
   background: var(--ink-line);
   transform: scale(0.97);
 }
-.cat-btn .cat-btn-icon{
-  font-size: 13px;
-  opacity: 0.7;
-}
+.cat-btn .cat-btn-icon{ font-size: 13px; opacity: 0.7; }
 .cat-btn .cat-btn-count{
   font-size: 9px;
   color: var(--sidebar-dim);
@@ -204,7 +398,7 @@ body{
 .cat-tagline{
   padding: 0 20px 10px 60px;
   margin: -6px 0 0;
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale, 1));
   font-style: italic;
   color: var(--sidebar-dim);
   display: none;
@@ -228,7 +422,7 @@ body{
   color: var(--sidebar-tx);
   text-align:left;
   padding: 10px 10px 10px 50px;
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--font-scale, 1));
   font-family: var(--serif-body);
   border-radius: var(--radius);
   cursor:pointer;
@@ -257,21 +451,90 @@ body{
   border-top: 1px solid var(--ink-line);
 }
 .catalog-foot p{
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale, 1));
   line-height:1.5;
   color: var(--sidebar-dim);
   margin:0;
 }
 
-/* ================= READER (MAIN) ================= */
+/* ============ РИДЕР ============ */
 .reader{
   background: var(--paper);
   min-height: 100vh;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
+  transition: background 0.3s;
 }
 
-/* --- Welcome / cover state --- */
+/* ============ ДИСКЛЕЙМЕР ============ */
+.disclaimer {
+  display: flex;
+  gap: 16px;
+  background: var(--paper-2);
+  border-left: 4px solid var(--maroon);
+  padding: 18px 22px;
+  margin: 16px 0 30px;
+  border-radius: var(--radius);
+  font-size: calc(14px * var(--font-scale, 1));
+  line-height: 1.6;
+  transition: background 0.3s;
+}
+.disclaimer-icon { font-size: 28px; flex-shrink: 0; line-height: 1; margin-top: 2px; }
+.disclaimer-content strong { color: var(--maroon); }
+.disclaimer-content p { margin: 6px 0; }
+.disclaimer-content p:last-child { margin-bottom: 0; }
+
+.legend {
+  margin-top: 10px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: calc(12px * var(--font-scale, 1));
+  color: var(--muted);
+}
+.legend-dot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.legend-dot.radical { background: #FFB74D; border: 1px solid #E65100; }
+.legend-dot.extremist { background: #EF5350; border: 2px solid #B71C1C; }
+
+.mini-disclaimer {
+  display: inline-block;
+  padding: 6px 16px;
+  border-radius: 12px;
+  font-size: calc(11px * var(--font-scale, 1));
+  font-family: var(--mono);
+  margin-bottom: 12px;
+  letter-spacing: 0.3px;
+  opacity: 0.95;
+}
+.mini-disclaimer span { margin-right: 8px; }
+.mini-disclaimer:not(.radical-disclaimer):not(.extremist-disclaimer) {
+  background: var(--paper-2);
+  color: var(--muted);
+}
+.radical-disclaimer {
+  background: #FFF3E0;
+  color: #E65100;
+  border: 1px solid #FFB74D;
+}
+.extremist-disclaimer {
+  background: #FFEBEE;
+  color: #B71C1C;
+  border: 2px solid #D32F2F;
+  font-weight: 600;
+}
+
+/* ============ ОБЛОЖКА ============ */
 .cover{
   max-width: 760px;
   margin: 0 auto;
@@ -279,7 +542,7 @@ body{
 }
 .cover-eyebrow{
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale, 1));
   letter-spacing: 2px;
   text-transform: uppercase;
   color: var(--maroon);
@@ -288,7 +551,7 @@ body{
 .cover h1{
   font-family: var(--serif-display);
   font-weight: 700;
-  font-size: clamp(38px, 5.5vw, 64px);
+  font-size: clamp(38px, 5.5vw, calc(64px * var(--font-scale, 1)));
   line-height: 1.05;
   margin: 0 0 4px;
   color: var(--ink-text);
@@ -296,7 +559,7 @@ body{
 }
 .version-badge-page{
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale, 1));
   color: var(--muted);
   background: var(--paper-2);
   display: inline-block;
@@ -309,13 +572,13 @@ body{
   font-family: var(--serif-display);
   font-weight: 600;
   font-style: italic;
-  font-size: clamp(24px, 3.5vw, 40px);
+  font-size: clamp(24px, 3.5vw, calc(40px * var(--font-scale, 1)));
   line-height: 1.1;
   margin: 0 0 20px;
   color: var(--muted);
 }
 .cover p.lede{
-  font-size: 18px;
+  font-size: calc(18px * var(--font-scale, 1));
   line-height: 1.65;
   color: var(--muted);
   max-width: 56ch;
@@ -335,21 +598,20 @@ body{
   cursor:pointer;
   transition: background .15s ease;
   touch-action: manipulation;
-  position:relative;
 }
 .cover-cell:hover{ background: var(--paper-2); }
 .cover-cell:active{ background: var(--paper-line); transform: scale(0.98); }
-.cover-cell .n{ font-family: var(--mono); font-size: 11px; color: var(--maroon); }
-.cover-cell .t{ font-family: var(--serif-display); font-weight:600; font-size: 16px; margin-top:4px;}
+.cover-cell .n{ font-family: var(--mono); font-size: calc(11px * var(--font-scale, 1)); color: var(--maroon); }
+.cover-cell .t{ font-family: var(--serif-display); font-weight:600; font-size: calc(16px * var(--font-scale, 1)); margin-top:4px;}
 .cover-cell-count{
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: calc(9px * var(--font-scale, 1));
   color: var(--sidebar-dim);
   margin-top: 4px;
   opacity: 0.6;
 }
 
-/* --- Entry (ideology page) state --- */
+/* ============ СТРАНИЦА ИДЕОЛОГИИ ============ */
 .entry{
   max-width: 760px;
   margin: 0 auto;
@@ -357,7 +619,7 @@ body{
 }
 .entry-breadcrumb{
   font-family: var(--mono);
-  font-size: 11.5px;
+  font-size: calc(11.5px * var(--font-scale, 1));
   letter-spacing: 0.4px;
   color: var(--muted);
   margin-bottom: 18px;
@@ -368,7 +630,7 @@ body{
 }
 .entry-breadcrumb button{
   background:none; border:none; padding:4px 0; margin:0;
-  font-family: var(--mono); font-size: 11.5px;
+  font-family: var(--mono); font-size: calc(11.5px * var(--font-scale, 1));
   color: var(--maroon); cursor:pointer; text-decoration: underline;
   text-underline-offset: 2px;
   touch-action: manipulation;
@@ -379,13 +641,13 @@ body{
 .entry h2{
   font-family: var(--serif-display);
   font-weight: 700;
-  font-size: clamp(32px, 4.4vw, 50px);
+  font-size: clamp(32px, 4.4vw, calc(50px * var(--font-scale, 1)));
   line-height: 1.05;
   margin: 0 0 12px;
   letter-spacing: 0.2px;
 }
 .entry .tagline{
-  font-size: 18px;
+  font-size: calc(18px * var(--font-scale, 1));
   font-style: italic;
   color: var(--muted);
   max-width: 58ch;
@@ -393,7 +655,7 @@ body{
   margin: 0 0 34px;
 }
 
-/* --- Compass (signature element) --- */
+/* ============ КОМПАС ============ */
 .compass{
   border-top: 1px solid var(--paper-line);
   border-bottom: 1px solid var(--paper-line);
@@ -405,7 +667,7 @@ body{
 .gauge-row{ display:grid; grid-template-columns: 108px 1fr; align-items:center; gap: 14px; }
 .gauge-label{
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: calc(11px * var(--font-scale, 1));
   color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -430,13 +692,13 @@ body{
 .gauge-ends{
   display:flex; justify-content:space-between;
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: calc(10px * var(--font-scale, 1));
   color: var(--muted);
   margin-top: 4px;
   grid-column: 2;
 }
 
-/* --- Chapter tabs --- */
+/* ============ ГЛАВЫ ============ */
 .chapter-tabs{
   display:flex;
   flex-wrap: wrap;
@@ -449,7 +711,7 @@ body{
   background:none;
   border:none;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale, 1));
   color: var(--muted);
   padding: 9px 14px;
   cursor:pointer;
@@ -477,19 +739,19 @@ body{
 @keyframes fade{ from{ opacity:0; transform: translateY(3px);} to{opacity:1; transform:none;} }
 .chapter-body h3{
   font-family: var(--serif-display);
-  font-size: 24px;
+  font-size: calc(24px * var(--font-scale, 1));
   font-weight: 600;
   margin: 0 0 16px;
 }
 .chapter-body p{
-  font-size: 18px;
+  font-size: calc(18px * var(--font-scale, 1));
   line-height: 1.75;
   margin: 0 0 20px;
   max-width: 62ch;
 }
 .chapter-body p::first-letter{
   font-family: var(--serif-display);
-  font-size: 46px;
+  font-size: calc(46px * var(--font-scale, 1));
   font-weight: 600;
   float: left;
   line-height: 0.85;
@@ -510,7 +772,7 @@ body{
   border: 1px solid var(--paper-line);
   color: var(--ink-text);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: calc(12px * var(--font-scale, 1));
   padding: 10px 16px;
   border-radius: var(--radius);
   cursor:pointer;
@@ -522,9 +784,72 @@ body{
 .entry-nav button:hover{ border-color: var(--maroon); color: var(--maroon); }
 .entry-nav button:active{ background: var(--paper-2); }
 .entry-nav button.next{ text-align: right; margin-left: auto; }
-.entry-nav .dir{ display:block; color: var(--muted); font-size: 10px; margin-bottom: 3px;}
+.entry-nav .dir{ display:block; color: var(--muted); font-size: calc(10px * var(--font-scale, 1)); margin-bottom: 3px;}
 
-/* ================= RESPONSIVE ================= */
+/* ============ МОБИЛЬНАЯ ПАНЕЛЬ ============ */
+.mobile-bar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  position:fixed;
+  top:0; left:0; right:0;
+  height: 56px;
+  background: var(--ink);
+  color: var(--sidebar-tx);
+  z-index: 30;
+  padding: 0 12px;
+  font-family: var(--mono);
+  font-size: calc(13px * var(--font-scale, 1));
+  border-bottom: 1px solid var(--ink-line);
+}
+.mobile-bar button{
+  background:none; 
+  border:1px solid var(--ink-line); 
+  color:var(--sidebar-tx);
+  border-radius: var(--radius); 
+  width: var(--touch-target); 
+  height: var(--touch-target); 
+  cursor:pointer; 
+  font-size:18px;
+  touch-action: manipulation;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.mobile-bar button:hover{ background: var(--ink-soft); }
+.mobile-bar button:active{ background: var(--ink-line); }
+.mobile-bar span{
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.version-badge{
+  font-size: 9px;
+  color: var(--brass-dim);
+  background: var(--ink-soft);
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+  flex-shrink: 0;
+}
+.mobile-bar .settings-toggle {
+  font-size: 18px;
+}
+
+/* ============ ОВЕРЛЕЙ ============ */
+#catalogOverlay{
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+
+/* ============ АДАПТИВНОСТЬ ============ */
 @media (max-width: 880px){
   .frame{ grid-template-columns: 1fr; }
   .catalog{
@@ -540,180 +865,48 @@ body{
   .catalog.open{ transform: translateX(0); }
   .catalog-toggle{ display:block; }
   
-  .reader{ padding-top: 54px; position:relative; }
-  .mobile-bar{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    position:fixed;
-    top:0; left:0; right:0;
-    height: 54px;
-    background: var(--ink);
-    color: var(--sidebar-tx);
-    z-index: 30;
-    padding: 0 12px;
-    font-family: var(--mono);
-    font-size: 13px;
-    border-bottom: 1px solid var(--ink-line);
-  }
-  .mobile-bar button{
-    background:none; 
-    border:1px solid var(--ink-line); 
-    color:var(--sidebar-tx);
-    border-radius: var(--radius); 
-    width: var(--touch-target); 
-    height: var(--touch-target); 
-    cursor:pointer; 
-    font-size:18px;
-    touch-action: manipulation;
-    flex-shrink: 0;
-  }
-  .mobile-bar button:hover{ background: var(--ink-soft); }
-  .mobile-bar button:active{ background: var(--ink-line); }
-  .mobile-bar span{
-    flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .version-badge{
-    font-size: 9px;
-    color: var(--brass-dim);
-    background: var(--ink-soft);
-    padding: 2px 8px;
-    border-radius: 10px;
-    letter-spacing: 0.3px;
-    flex-shrink: 0;
-  }
+  .reader{ padding-top: 56px; position:relative; }
+  
   .entry, .cover{ padding-left: 18px; padding-right: 18px; }
   .cover{ padding-top: 6vh; }
   .cover-grid{ grid-template-columns: repeat(auto-fill, minmax(150px,1fr)); }
   .cover-cell{ padding: 14px 14px; }
-  .cover-cell .t{ font-size: 14px; }
+  .cover-cell .t{ font-size: calc(14px * var(--font-scale, 1)); }
   
   .chapter-tabs{ gap: 2px; }
-  .chapter-tab{ padding: 8px 10px; font-size: 11px; }
+  .chapter-tab{ padding: 8px 10px; font-size: calc(11px * var(--font-scale, 1)); }
+  .entry-nav button{ font-size: calc(11px * var(--font-scale, 1)); padding: 8px 12px; }
   
-  .entry-nav button{ font-size: 11px; padding: 8px 12px; }
-}
-
-/* Оверлей для мобильных */
-#catalogOverlay{
-  display: none;
-  position: fixed;
-  inset: 0;
-  z-index: 35;
-  background: rgba(0,0,0,0.5);
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  .settings-panel {
+    right: -100%;
+    width: 90%;
+    max-width: 340px;
+  }
+  .settings-panel.open { right: 0; }
+  .settings-toggle { font-size: 18px; }
 }
 
 @media (min-width: 881px){
   .mobile-bar{ display:none; }
-  .version-badge{ display: none; }
-  #catalogOverlay{ display: none !important; }
+  .settings-toggle { display: none; }
 }
+
 @media (max-width: 480px){
   .cover-grid{ grid-template-columns: 1fr 1fr; }
   .cover{ padding: 4vh 14px 40px; }
   .entry{ padding: 40px 14px 80px; }
-  .cover h1{ font-size: clamp(28px, 8vw, 38px); }
-  .cover h2{ font-size: clamp(18px, 4vw, 28px); }
-  .cover p.lede{ font-size: 15px; }
-  .entry h2{ font-size: clamp(26px, 6vw, 38px); }
-  .entry .tagline{ font-size: 15px; }
-  .chapter-body p{ font-size: 16px; }
-  .chapter-body p::first-letter{ font-size: 38px; }
+  .cover h1{ font-size: clamp(28px, 8vw, calc(38px * var(--font-scale, 1))); }
+  .cover h2{ font-size: clamp(18px, 4vw, calc(28px * var(--font-scale, 1))); }
+  .cover p.lede{ font-size: calc(15px * var(--font-scale, 1)); }
+  .entry h2{ font-size: clamp(26px, 6vw, calc(38px * var(--font-scale, 1))); }
+  .entry .tagline{ font-size: calc(15px * var(--font-scale, 1)); }
+  .chapter-body p{ font-size: calc(16px * var(--font-scale, 1)); }
+  .chapter-body p::first-letter{ font-size: calc(38px * var(--font-scale, 1)); }
   .gauge-row{ grid-template-columns: 80px 1fr; gap: 8px; }
-  .gauge-label{ font-size: 10px; }
+  .gauge-label{ font-size: calc(10px * var(--font-scale, 1)); }
   .catalog{ width: 85%; inset: 0 15% 0 0; }
-}
-
-/* ================= МИНИ-ДИСКЛЕЙМЕРЫ ДЛЯ РАДИКАЛЬНЫХ ИДЕОЛОГИЙ ================= */
-.mini-disclaimer {
-  display: inline-block;
-  padding: 6px 16px;
-  border-radius: 12px;
-  font-size: 11px;
-  font-family: var(--mono);
-  margin-bottom: 12px;
-  letter-spacing: 0.3px;
-  opacity: 0.9;
-}
-
-.mini-disclaimer span {
-  margin-right: 8px;
-}
-
-/* Стандартный дисклеймер */
-.mini-disclaimer:not(.radical-disclaimer):not(.extremist-disclaimer) {
-  background: var(--paper-2);
-  color: var(--muted);
-}
-
-/* Радикальный дисклеймер */
-.radical-disclaimer {
-  background: #FFF3E0;
-  color: #E65100;
-  border: 1px solid #FFB74D;
-}
-
-/* Экстремистский дисклеймер */
-.extremist-disclaimer {
-  background: #FFEBEE;
-  color: #B71C1C;
-  border: 2px solid #D32F2F;
-  font-weight: 600;
-}
-
-/* Легенда в дисклеймере */
-.legend-item {
-  display: inline-block;
-  margin-right: 16px;
-  font-size: 12px;
-  color: var(--muted);
-}
-
-.legend-dot {
-  display: inline-block;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  margin-right: 4px;
-  vertical-align: middle;
-}
-
-.legend-dot.radical {
-  background: #FFB74D;
-  border: 1px solid #E65100;
-}
-
-.legend-dot.extremist {
-  background: #EF5350;
-  border: 2px solid #B71C1C;
-}
-
-/* Иконки в списке категорий */
-.ideo-btn[class*="extreme"] {
-  color: #EF5350 !important;
-}
-
-.ideo-btn[class*="radical"] {
-  color: #FFB74D !important;
-}
-
-/* Адаптация для мобильных */
-@media (max-width: 480px) {
-  .mini-disclaimer {
-    font-size: 10px;
-    padding: 4px 12px;
-  }
-  .legend-item {
-    font-size: 10px;
-    margin-right: 10px;
-  }
-  .legend-dot {
-    width: 10px;
-    height: 10px;
-  }
+  .disclaimer{ font-size: calc(12px * var(--font-scale, 1)); padding: 14px 16px; }
+  .disclaimer-icon{ font-size: 22px; }
+  .mobile-bar{ padding: 0 8px; gap: 6px; }
+  .mobile-bar button{ width: 42px; height: 42px; font-size: 16px; }
 }
