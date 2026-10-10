@@ -287,12 +287,12 @@
         <button id="mbToggle" aria-label="Открыть каталог">☰</button>
         <span>Идеологический Компас</span>
         <button id="settingsBtn" class="settings-toggle" aria-label="Настройки">⚙</button>
-        <span class="version-badge">v7.3</span>
+        <span class="version-badge">v8.2</span>
       </div>
       <div class="cover">
         <div class="cover-eyebrow">Справочник · ${DATA.length} категорий · ${totalIdeologies} идеологий</div>
         <h1>Идеологический Компас</h1>
-        <div class="version-badge-page">Версия 7.3</div>
+        <div class="version-badge-page">Версия 8.2</div>
 
         <!-- ДИСКЛЕЙМЕР -->
         <div class="disclaimer">
@@ -379,7 +379,7 @@
         <button id="mbToggle" aria-label="Открыть каталог">☰</button>
         <span>${isCore ? 'Категория' : ''} ${cat.name}</span>
         <button id="settingsBtn" class="settings-toggle" aria-label="Настройки">⚙</button>
-        <span class="version-badge">v7.3</span>
+        <span class="version-badge">v8.2</span>
       </div>
       <div class="entry">
         <div class="${disclaimerClass}">
