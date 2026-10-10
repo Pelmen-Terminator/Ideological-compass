@@ -1,6 +1,24 @@
 (function(){
   "use strict";
 
+  // Показываем понятную диагностику вместо полностью пустого экрана.
+  function showStartupError(message) {
+    const reader = document.getElementById("reader");
+    const catalog = document.getElementById("catalogList");
+    if (catalog && !catalog.children.length) {
+      catalog.innerHTML = '<div style="padding:16px;color:#f0c8a8">Каталог не загрузился. Проверьте файлы сайта.</div>';
+    }
+    if (reader) {
+      reader.innerHTML = '<section style="max-width:760px;margin:48px auto;padding:28px;background:#fff8ee;color:#332b24;border:1px solid #d7bda0;border-radius:12px;font:16px/1.6 system-ui,sans-serif"><h2 style="margin-top:0">Не удалось запустить «Идеологический компас»</h2><p>Скрипт сайта остановился из-за ошибки. Обновите страницу после очистки кэша и убедитесь, что <code>data.js</code>, <code>app.js</code> и <code>style.css</code> находятся рядом с <code>index.html</code>.</p><details><summary>Техническая информация</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">' + String(message || 'Неизвестная ошибка').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])) + '</pre></details></section>';
+    }
+  }
+  window.addEventListener('error', function(event) {
+    if (event && event.message) showStartupError(event.message + (event.filename ? '\n' + event.filename + ':' + event.lineno : ''));
+  });
+  window.addEventListener('unhandledrejection', function(event) {
+    showStartupError(event.reason && (event.reason.stack || event.reason.message) || event.reason || 'Unhandled promise rejection');
+  });
+
   const catalogList = document.getElementById("catalogList");
   const reader = document.getElementById("reader");
   const catalogEl = document.getElementById("catalog");
@@ -15,8 +33,16 @@
   const viewportInfo = document.getElementById("viewportInfo");
 
   // ---- flat index for quick lookup + prev/next ----
+  if (!Array.isArray(DATA) || DATA.length === 0) {
+    showStartupError('DATA отсутствует или не является непустым массивом. Проверьте подключение data.js и порядок скриптов.');
+    return;
+  }
+
   const flat = [];
   DATA.forEach((cat, ci) => {
+    if (!cat || typeof cat.name !== 'string' || !Array.isArray(cat.ideologies)) {
+      throw new Error('Некорректная категория данных №' + (ci + 1));
+    }
     cat.ideologies.forEach((ideo, ii) => {
       flat.push({ ci, ii, cat, ideo });
     });
@@ -261,12 +287,12 @@
         <button id="mbToggle" aria-label="Открыть каталог">☰</button>
         <span>Идеологический Компас</span>
         <button id="settingsBtn" class="settings-toggle" aria-label="Настройки">⚙</button>
-        <span class="version-badge">v7.1</span>
+        <span class="version-badge">v7.3</span>
       </div>
       <div class="cover">
         <div class="cover-eyebrow">Справочник · ${DATA.length} категорий · ${totalIdeologies} идеологий</div>
         <h1>Идеологический Компас</h1>
-        <div class="version-badge-page">Версия 7.1</div>
+        <div class="version-badge-page">Версия 7.3</div>
 
         <!-- ДИСКЛЕЙМЕР -->
         <div class="disclaimer">
@@ -353,7 +379,7 @@
         <button id="mbToggle" aria-label="Открыть каталог">☰</button>
         <span>${isCore ? 'Категория' : ''} ${cat.name}</span>
         <button id="settingsBtn" class="settings-toggle" aria-label="Настройки">⚙</button>
-        <span class="version-badge">v7.1</span>
+        <span class="version-badge">v7.3</span>
       </div>
       <div class="entry">
         <div class="${disclaimerClass}">
@@ -455,5 +481,13 @@
   loadSettings();
 
   window.addEventListener("hashchange", route);
-  route();
+  try {
+    route();
+    if (!catalogList.children.length || !reader.children.length) {
+      throw new Error('Страница не отрисована: проверьте структуру DATA и DOM-элементы.');
+    }
+  } catch (error) {
+    showStartupError(error && (error.stack || error.message) || error);
+    console.error('Идеологический компас: ошибка запуска', error);
+  }
 })();
