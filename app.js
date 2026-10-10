@@ -29,7 +29,8 @@
   // ---------------- Настройки ----------------
   // Загрузка сохранённых настроек
   function loadSettings() {
-    const saved = localStorage.getItem('ideological-compass-settings');
+    let saved = null;
+    try { saved = localStorage.getItem('ideological-compass-settings'); } catch (e) {}
     if (saved) {
       try {
         const settings = JSON.parse(saved);
@@ -51,7 +52,11 @@
       fontSize: fontSizeSelect.value,
       theme: themeSelect.value
     };
-    localStorage.setItem('ideological-compass-settings', JSON.stringify(settings));
+    try {
+      localStorage.setItem('ideological-compass-settings', JSON.stringify(settings));
+    } catch (e) {
+      // Сайт продолжает работать, даже если хранилище недоступно.
+    }
   }
 
   function applyViewport(value) {
@@ -98,9 +103,11 @@
   }
 
   // ---- Настройки UI ----
-  settingsBtn.addEventListener('click', () => {
-    settingsPanel.classList.toggle('open');
-  });
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', () => {
+      settingsPanel.classList.toggle('open');
+    });
+  }
 
   settingsClose.addEventListener('click', () => {
     settingsPanel.classList.remove('open');
@@ -109,7 +116,8 @@
   // Закрытие настроек при клике вне
   document.addEventListener('click', (e) => {
     if (settingsPanel.classList.contains('open')) {
-      if (!settingsPanel.contains(e.target) && e.target !== settingsBtn) {
+      const trigger = e.target.closest && e.target.closest('#settingsBtn');
+      if (!settingsPanel.contains(e.target) && !trigger) {
         settingsPanel.classList.remove('open');
       }
     }
@@ -126,13 +134,6 @@
   themeSelect.addEventListener('change', (e) => {
     applyTheme(e.target.value);
   });
-
-  // ---- flat index for quick lookup + prev/next ----
-  // (уже объявлен выше)
-
-  function findByIdeoId(id){
-    return flat.find(f => f.ideo.id === id) || null;
-  }
 
   // ---------------- Sidebar (catalog) ----------------
   function renderCatalog(activeIdeoId){
@@ -260,12 +261,12 @@
         <button id="mbToggle" aria-label="Открыть каталог">☰</button>
         <span>Идеологический Компас</span>
         <button id="settingsBtn" class="settings-toggle" aria-label="Настройки">⚙</button>
-        <span class="version-badge">v7.0</span>
+        <span class="version-badge">v7.1</span>
       </div>
       <div class="cover">
         <div class="cover-eyebrow">Справочник · ${DATA.length} категорий · ${totalIdeologies} идеологий</div>
         <h1>Идеологический Компас</h1>
-        <div class="version-badge-page">Версия 7.0</div>
+        <div class="version-badge-page">Версия 7.1</div>
 
         <!-- ДИСКЛЕЙМЕР -->
         <div class="disclaimer">
@@ -352,7 +353,7 @@
         <button id="mbToggle" aria-label="Открыть каталог">☰</button>
         <span>${isCore ? 'Категория' : ''} ${cat.name}</span>
         <button id="settingsBtn" class="settings-toggle" aria-label="Настройки">⚙</button>
-        <span class="version-badge">v7.0</span>
+        <span class="version-badge">v7.1</span>
       </div>
       <div class="entry">
         <div class="${disclaimerClass}">
